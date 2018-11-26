@@ -1,0 +1,10 @@
+{
+  "type": "library",
+  "name": "docker-xampp/bin",
+  "description": "docker images docker/xampp",
+  "license": "MIT",
+  "bin": [
+    "bin/xampp-start",
+    "bin/xampp-stop"
+  ]
+}

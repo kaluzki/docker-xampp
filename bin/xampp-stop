@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+function main() {
+	local images="dns proxy mail pma mysql"
+	docker stop ${images} 2>/dev/null
+	docker rm ${images} 2>/dev/null
+
+	local network="local"
+	docker network rm ${network} 2>/dev/null
+}
+
+main

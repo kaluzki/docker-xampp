@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+function main() {
+	local network=local
+	docker network inspect ${network} > /dev/null 2>&1 || docker network create ${network} > /dev/null 2>&1
+
+	docker start dns 2>/dev/null || docker run -d --hostname dns --name dns --network ${network} \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /etc/resolv.conf:/etc/resolv.conf \
+		xampp/dns
+
+	docker start proxy 2>/dev/null || docker run -d --hostname proxy --name proxy --network ${network} \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-p 80:80 -p 443:443 \
+		xampp/proxy
+
+	docker start mail 2>/dev/null || docker run -d --hostname mail --name mail --network ${network} \
+		xampp/mail
+
+	docker start pma 2>/dev/null || docker run -d --hostname pma --name pma --network ${network} \
+		xampp/pma
+
+	docker volume inspect mysql > /dev/null 2>&1 || docker volume create mysql > /dev/null 2>&1
+	docker start mysql 2>/dev/null || docker run -d --hostname mysql --name mysql --network ${network} \
+	    -v mysql:/var/lib/mysql \
+		xampp/mysql
+
+}
+
+main
