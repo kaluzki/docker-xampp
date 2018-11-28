@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+function main() {
+    mkdir -p ~/.composer
+    mkdir -p ~/.npm
+    mkdir -p ~/.ssh
+
+	local name=${PWD##*/} base=$(dirname "$0")/
+    local XDEBUG_REMOTE_HOST=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
+
+	${base}/xampp-env
+
+	docker start ${name} 2>/dev/null || docker run -td --net local \
+		--name ${name} \
+		--hostname ${name} \
+        --label "traefik.frontend.rule=Host:$name.localhost" \
+        --env XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST} \
+        --env COMPOSER_ALLOW_XDEBUG=0 \
+		--volume ~/.composer:/home/app/.composer \
+		--volume ~/.npm:/home/app/.npm \
+		--volume ~/.gitconfig:/home/app/.gitconfig:ro \
+		--volume ~/.ssh:/home/app/.ssh:ro \
+		--volume $(pwd):/app \
+		$@ \
+		xampp/app
+
+	docker exec -ti -u $UID ${name} bash
+}
+
+main $@
