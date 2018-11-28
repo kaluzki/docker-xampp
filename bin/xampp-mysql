@@ -5,20 +5,29 @@ function main() {
 	docker network inspect ${network} > /dev/null 2>&1 || docker network create ${network} > /dev/null 2>&1
 
 	local host user pass
-	read -p "mysql server: " host
-	read -p "mysql user: " user
-	read -s -p "mysql password: " pass
-	printf "\n"
+
+	if [[ ${1} ]]; then
+		host=${1}
+	else
+		read -p "mysql server: " host
+	fi
 
 	docker volume inspect ${host} > /dev/null 2>&1 || docker volume create ${host} > /dev/null 2>&1
-	docker start ${host} 2>/dev/null || docker run -d --hostname ${host} --name ${host} --network ${network} \
-		--restart unless-stopped \
-		--volume ${host}:/var/lib/mysql \
-		--env MYSQL_DATABASE=${user} \
-		--env MYSQL_USER=${user} \
-		--env MYSQL_PASSWORD=${pass} \
-		--env MYSQL_ROOT_PASSWORD=${pass} \
-		xampp/mysql
+
+	docker start ${host} 2>/dev/null || {
+		read -p "mysql user: " user
+		read -s -p "mysql password: " pass
+		printf "\n"
+
+		docker run -d --hostname ${host} --name ${host} --network ${network} \
+			--restart unless-stopped \
+			--volume ${host}:/var/lib/mysql \
+			--env MYSQL_DATABASE=${user} \
+			--env MYSQL_USER=${user} \
+			--env MYSQL_PASSWORD=${pass} \
+			--env MYSQL_ROOT_PASSWORD=${pass} \
+			xampp/mysql
+	}
 }
 
-main
+main $@
