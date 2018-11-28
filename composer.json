@@ -4,7 +4,9 @@
   "description": "docker images docker/xampp",
   "license": "MIT",
   "bin": [
-    "bin/xampp-start",
-    "bin/xampp-stop"
+    "bin/xampp-down",
+    "bin/xampp-env",
+    "bin/xampp-mysql",
+    "bin/xampp-up"
   ]
 }
