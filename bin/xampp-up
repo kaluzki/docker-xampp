@@ -5,8 +5,12 @@ function main() {
     mkdir -p ~/.npm
     mkdir -p ~/.ssh
 
-	local name=${PWD##*/} base=$(dirname "$0")/
+	local version=latest name=${PWD##*/} base=$(dirname "$0")/
     local XDEBUG_REMOTE_HOST=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
+    [[ $1 == :* ]] && {
+        version=$(echo $1| cut -d':' -f 2)
+        shift
+    }
 
 	${base}/xampp-env
 
@@ -22,7 +26,7 @@ function main() {
 		--volume ~/.ssh:/home/app/.ssh:ro \
 		--volume $(pwd):/app \
 		$@ \
-		xampp/app
+		xampp/app:${version}
 
 	docker exec -ti -u $UID ${name} bash
 }
