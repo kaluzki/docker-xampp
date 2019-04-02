@@ -16,7 +16,7 @@ function main() {
 
 	docker start ${name} 2>/dev/null || docker run -td --net local \
 		--name ${name} \
-		--hostname ${name} \
+		--hostname "https://$name.localhost" \
         --label "traefik.frontend.rule=Host:$name.localhost" \
         --env XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST} \
 		--volume ~/.composer:/home/app/.composer \
