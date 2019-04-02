@@ -24,6 +24,7 @@ function main() {
 		--volume ~/.gitconfig:/home/app/.gitconfig:ro \
 		--volume ~/.ssh:/home/app/.ssh:ro \
 		--volume $(pwd):/app \
+		--volume $(pwd):/opt/project \
 		$@ \
 		xampp/app:${version}
 
