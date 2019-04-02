@@ -1,4 +1,4 @@
-# docker build -t xampp/app src -f src/app.Dockerfile
+# docker build -t xampp/app src -f src/app.Dockerfile:7.1
 # docker run -tid --rm --hostname app --name app --network local --volume $(pwd):/app --label "traefik.frontend.rule=Host:app.localhost" xampp/app
 FROM webdevops/php-apache-dev:7.1
 
