@@ -10,7 +10,7 @@ LABEL traefik.docker.network=local
 CMD [ \
 	"--api", \
 	"--logLevel=error", \
-	"--entrypoints=Name:http Address::80", \
+	"--entrypoints=Name:http Address::80 Redirect.EntryPoint:https", \
 	"--entrypoints=Name:https Address::443 TLS", \
 	"--defaultentrypoints=http,https", \
 	"--docker", \
