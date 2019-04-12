@@ -4,6 +4,16 @@ function up() {
 	printf "xampp up:\n"
 	local network=local base=$(dirname "$0")/
 
+#     openssl req -new -newkey rsa:4096 -days 36500 -nodes -x509  \
+#     -subj "/C=DE/ST=xampp/L=xampp/O=xampp/CN=*.localhost" \
+#     -keyout localhost.key  -out localhost.crt
+
+    openssl verify ${base}/../resources/certs/localhost.crt > /dev/null 2>&1 || {
+        sudo mkdir /usr/local/share/ca-certificates/docker-xampp-bin -p;
+        sudo cp ${base}/../resources/certs/localhost.crt /usr/local/share/ca-certificates/docker-xampp-bin;
+        sudo update-ca-certificates -v -f;
+    }
+
 	docker network inspect ${network} > /dev/null 2>&1 || docker network create ${network} > /dev/null 2>&1
 
 	docker start dns 2>/dev/null || docker run -d --hostname dns --name dns --network ${network} \
@@ -11,20 +21,24 @@ function up() {
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v /etc/resolv.conf:/etc/resolv.conf \
 		xampp/dns
+	echo https://dns.localhost
 
 	docker start proxy 2>/dev/null || docker run -d --hostname proxy --name proxy --network ${network} \
 		--restart unless-stopped \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-p 80:80 -p 443:443 \
 		xampp/proxy
+    echo https://proxy.localhost
 
 	docker start mail 2>/dev/null || docker run -d --hostname mail --name mail --network ${network} \
 		--restart unless-stopped \
 		xampp/mail
+    echo https://mail.localhost
 
 	docker start pma 2>/dev/null || docker run -d --hostname pma --name pma --network ${network} \
 		--restart unless-stopped \
 		xampp/pma
+    echo https://pma.localhost
 
 	docker start mysql 2>/dev/null || . ${base}/xampp-mysql "mysql"
 }
