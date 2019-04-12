@@ -1,15 +1,9 @@
-# docker build -t xampp/app src --build-arg FROM=php-apache-dev:7.1 -f src/app.Dockerfile
-# docker build -t xampp/app:5.6 src --build-arg FROM=php-apache-dev:7.0 -f src/app.Dockerfile
-# docker build -t xampp/app:7.0 src --build-arg FROM=php-apache-dev:debian-8 -f src/app.Dockerfile
-# docker build -t xampp/app:7.1 src --build-arg FROM=php-apache-dev:7.1 -f src/app.Dockerfile
-# docker build -t xampp/app:7.2 src --build-arg FROM=php-apache-dev:7.2 -f src/app.Dockerfile
-# docker build -t xampp/app:7.3 src --build-arg FROM=php-apache-dev:7.3 -f src/app.Dockerfile
-
-# docker run -tid --rm --hostname app --name app --network local --volume $(pwd):/app --label "traefik.frontend.rule=Host:app.localhost" xampp/app
+# docker build -t xampp/app:7.1 src -f src/app:7.1.Dockerfile
+# docker build -t xampp/app src -f src/app:7.1.Dockerfile
 # bin/xampp-up --env DOCKER_XAMPP_BIN_ENV=dev
 
-ARG FROM
-FROM webdevops/$FROM
+FROM webdevops/php-apache-dev:7.1
+
 
 LABEL traefik.enable=true
 LABEL traefik.docker.network=local
