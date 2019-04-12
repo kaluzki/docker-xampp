@@ -4,7 +4,6 @@
 
 FROM webdevops/php-apache-dev:7.1
 
-
 LABEL traefik.enable=true
 LABEL traefik.docker.network=local
 
