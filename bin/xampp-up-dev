@@ -2,7 +2,7 @@
 
 function main() {
     local xampp=$(dirname "$0")/
-    ${xampp}/xampp-up --env DOCKER_XAMPP_BIN_ENV=dev $@
+    ${xampp}/xampp-up --env DOCKER_XAMPP_BIN_ENV=dev
 }
 
 main $@

@@ -24,7 +24,7 @@ function main() {
         }
     done;
 
-    docker docker run -td --rm --net local \
+    docker run -td --rm --net local \
         --name ${name} \
         --hostname "https://$name.localhost" \
         --label "traefik.frontend.rule=Host:$name.localhost" \
