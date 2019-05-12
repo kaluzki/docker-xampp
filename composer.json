@@ -7,6 +7,7 @@
     "bin/xampp-down",
     "bin/xampp-env",
     "bin/xampp-mysql",
-    "bin/xampp-up"
+    "bin/xampp-up",
+    "bin/xampp-up-dev"
   ]
 }
