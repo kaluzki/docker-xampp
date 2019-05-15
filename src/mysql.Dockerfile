@@ -3,3 +3,4 @@
 FROM mysql:5.7
 
 ENV MYSQL_ROOT_PASSWORD=root
+COPY opt/etc/mysql/conf.d /etc/mysql/conf.d/
