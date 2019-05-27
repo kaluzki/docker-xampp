@@ -36,10 +36,10 @@ function main() {
         --volume $(pwd):/app \
         --volume $(pwd):/opt/project \
         ${volumes} \
-        $@ \
+        "$@" \
         xampp/app:${version}
 
     docker exec -ti -u $UID ${name} bash
 }
 
-main $@
+main "$@"
