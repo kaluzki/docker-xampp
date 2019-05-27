@@ -26,9 +26,10 @@ function main() {
 
     docker start ${name} 2>/dev/null || docker run -td --rm --net local \
         --name ${name} \
-        --hostname "https://$name.localhost" \
+        --hostname ${name} \
         --label "traefik.frontend.rule=Host:$name.localhost" \
-        --env XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST} \
+        --env XDEBUG_REMOTE_HOST=${name} \
+        --env "ACCOUNT=https://$name.localhost" \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
         --volume ~/.gitconfig:/home/app/.gitconfig:ro \
