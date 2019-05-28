@@ -28,7 +28,7 @@ function main() {
         --name ${name} \
         --hostname ${name} \
         --label "traefik.frontend.rule=Host:$name.localhost" \
-        --env XDEBUG_REMOTE_HOST=${name} \
+        --env XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST} \
         --env "ACCOUNT=https://$name.localhost" \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
