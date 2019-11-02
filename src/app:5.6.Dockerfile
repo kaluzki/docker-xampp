@@ -2,6 +2,10 @@
 # bin/xampp-up :5.6 --env DOCKER_XAMPP_BIN_ENV=dev
 
 FROM webdevops/php-apache-dev:debian-8
+# Distributor ID:	Debian
+# Description:	Debian GNU/Linux 8.11 (jessie)
+# Release:	8.11
+# Codename:	jessie
 
 LABEL traefik.enable=true
 LABEL traefik.docker.network=local

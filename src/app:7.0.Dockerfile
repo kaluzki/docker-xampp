@@ -2,6 +2,10 @@
 # bin/xampp-up :7.0 --env DOCKER_XAMPP_BIN_ENV=dev
 
 FROM webdevops/php-apache-dev:7.0
+# Distributor ID:	Debian
+# Description:	Debian GNU/Linux 9.6 (stretch)
+# Release:	9.6
+# Codename:	stretch
 
 LABEL traefik.enable=true
 LABEL traefik.docker.network=local
