@@ -24,21 +24,25 @@ function main() {
         }
     done;
 
+    mkdir -p ~/.local/share/xampp/"${name}"
+    touch ~/.local/share/xampp/"${name}"/.bash_history
+
     docker start "${name}" 2>/dev/null || docker run -td --rm --net local \
         --name "${name}" \
         --hostname "${name}" \
         --label "traefik.frontend.rule=Host:$name.localhost" \
         --env XDEBUG_REMOTE_HOST="${XDEBUG_REMOTE_HOST}" \
         --env "ACCOUNT=https://$name.localhost" \
+        --volume ~/.local/share/xampp/"${name}"/.bash_history:/home/app/.bash_history \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
         --volume ~/.gitconfig:/home/app/.gitconfig:ro \
         --volume ~/.ssh:/home/app/.ssh:ro \
         --volume $(pwd):/app \
         --volume $(pwd):/opt/project \
-        "${volumes}" \
+        ${volumes} \
         "$@" \
-        xampp/app:"${version}"
+        "xampp/app:${version}"
 
     docker exec -ti -u $UID "${name}" bash
 }
