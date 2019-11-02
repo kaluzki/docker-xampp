@@ -8,27 +8,27 @@ function main() {
     local version=latest name=${PWD##*/} xampp=$(dirname "$0")/
     local XDEBUG_REMOTE_HOST=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
     [[ $1 == :* ]] && {
-        version=$(echo $1| cut -d':' -f 2)
+        version=$(echo "$1"| cut -d':' -f 2)
         shift
     }
 
-    ${xampp}/xampp-env
+    "${xampp}"/xampp-env
 
     # mount directories' symbolic links which are outside of the base directory as volumes to the container
     local base=${PWD} volumes link candidate relative
-    for link in $(find ${base} -type l); do
-        candidate=$(readlink -f ${link})
+    for link in $(find "${base}" -type l); do
+        candidate=$(readlink -f "${link}")
         [[ -d ${candidate} ]] && [[  ${candidate} != ${base}/* ]] && {
             relative=${link:${#base}+1:100}
             volumes="${volumes} --volume ${candidate}:/app/${relative}"
         }
     done;
 
-    docker start ${name} 2>/dev/null || docker run -td --rm --net local \
-        --name ${name} \
-        --hostname ${name} \
+    docker start "${name}" 2>/dev/null || docker run -td --rm --net local \
+        --name "${name}" \
+        --hostname "${name}" \
         --label "traefik.frontend.rule=Host:$name.localhost" \
-        --env XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST} \
+        --env XDEBUG_REMOTE_HOST="${XDEBUG_REMOTE_HOST}" \
         --env "ACCOUNT=https://$name.localhost" \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
@@ -36,11 +36,11 @@ function main() {
         --volume ~/.ssh:/home/app/.ssh:ro \
         --volume $(pwd):/app \
         --volume $(pwd):/opt/project \
-        ${volumes} \
+        "${volumes}" \
         "$@" \
-        xampp/app:${version}
+        xampp/app:"${version}"
 
-    docker exec -ti -u $UID ${name} bash
+    docker exec -ti -u $UID "${name}" bash
 }
 
 main "$@"

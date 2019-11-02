@@ -4,6 +4,8 @@ function up() {
     printf "xampp env up:\n"
     local network=local base=$(dirname $(readlink -f "$0"))/
 
+    # chrome://flags/#allow-insecure-localhost
+    #
     # openssl req -new -newkey rsa:4096 -days 36500 -nodes -x509  \
     #     -subj "/C=DE/ST=xampp/L=xampp/O=xampp/CN=*.localhost" \
     #     -keyout localhost.key  -out localhost.crt
