@@ -12,4 +12,7 @@ function main() {
     docker-php-ext-enable sqlsrv pdo_sqlsrv
 }
 
-[[ $(docker-image-info dist-codename) = "jessie" ]] || main
+# todo 7.4 (buster)
+if [[ $(docker-image-info dist-codename) = "stretch" ]]; then
+    main
+fi

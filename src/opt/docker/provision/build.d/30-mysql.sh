@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
 
-apt-install mysql-client
+case $(docker-image-info dist-codename) in
+    stretch)
+        apt-install mysql-client
+        ;;
+    buster)
+        apt-install default-mysql-client
+        ;;
+esac
