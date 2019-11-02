@@ -9,5 +9,12 @@
     "bin/xampp-mysql",
     "bin/xampp-up",
     "bin/xampp-up-dev"
-  ]
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.x-dev"
+    }
+  }
 }
