@@ -4,6 +4,7 @@ FROM phpmyadmin/phpmyadmin
 
 ENV PMA_ARBITRARY=1
 
+LABEL traefik.http.routers.pma.middlewares=https-redirect@docker
+LABEL traefik.http.routers.pma.rule=Host(`pma.localhost`)
+LABEL traefik.http.routers.pma.tls=true
 LABEL traefik.enable=true
-LABEL traefik.docker.network=local
-LABEL traefik.frontend.rule=Host:pma.localhost
