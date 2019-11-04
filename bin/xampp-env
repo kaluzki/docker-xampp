@@ -5,15 +5,6 @@ function up() {
     local network=local base=$(dirname $(readlink -f "$0"))/
 
     # chrome://flags/#allow-insecure-localhost
-    #
-    # openssl req -new -newkey rsa:4096 -days 36500 -nodes -x509  \
-    #     -subj "/C=DE/ST=xampp/L=xampp/O=xampp/CN=*.localhost" \
-    #     -keyout localhost.key  -out localhost.crt
-    openssl verify ${base}/../resources/certs/localhost.crt > /dev/null 2>&1 || {
-        sudo mkdir /usr/local/share/ca-certificates/docker-xampp-bin -p;
-        sudo cp ${base}/../resources/certs/localhost.crt /usr/local/share/ca-certificates/docker-xampp-bin;
-        sudo update-ca-certificates -v -f;
-    }
 
     docker network inspect ${network} > /dev/null 2>&1 || docker network create ${network} > /dev/null 2>&1
 
