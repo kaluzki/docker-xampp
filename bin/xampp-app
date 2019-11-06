@@ -51,6 +51,8 @@ function main() {
 
     # mount directories' symbolic links which are outside of the base directory as volumes to the container
     local base=${PWD} volumes link candidate relative
+    local host=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
+
     for link in $(find "${base}" -type l); do
         candidate=$(readlink -f "${link}")
         [[ -d ${candidate} ]] && [[  ${candidate} != ${base}/* ]] && {
@@ -91,7 +93,7 @@ function main() {
         --env COMPOSER_ALLOW_XDEBUG=1 \
         --env XDEBUG_PROFILER_ENABLE_TRIGGER=1 \
         --env XDEBUG_CONFIG="idekey=phpstorm" \
-        --env XDEBUG_REMOTE_HOST=host.localhost \
+        --env XDEBUG_REMOTE_HOST="$host" \
         --env DOCKER_XAMPP_BIN_ENV="$env" \
         --env ACCOUNT="http://$name.localhost" \
         --volume ~/.local/share/xampp/"$name"/.bash_history:/home/app/.bash_history \
