@@ -4,11 +4,9 @@
   "description": "docker images docker/xampp",
   "license": "MIT",
   "bin": [
-    "bin/xampp-down",
+    "bin/xampp-app",
     "bin/xampp-env",
-    "bin/xampp-mysql",
-    "bin/xampp-up",
-    "bin/xampp-up-dev"
+    "bin/xampp-mysql"
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
