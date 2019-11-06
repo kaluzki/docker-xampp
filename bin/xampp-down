@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-docker stop ${PWD##*/} 2>/dev/null
-docker rm ${PWD##*/} 2>/dev/null

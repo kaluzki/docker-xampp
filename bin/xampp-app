@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+function main() {
+    local xampp=$(dirname "$0")/ name=${PWD##*/}
+
+    local i version=latest env=prod rm run=YES
+    for i in "$@"
+    do
+    case $i in
+        :*)
+        version="${i#*:}"
+        shift
+        ;;
+
+        @*)
+        env="${i#*@}"
+        shift
+        ;;
+
+        --rm)
+        run=
+        rm=YES
+        shift
+        ;;
+
+        --restart)
+        run=YES
+        rm=YES
+        shift
+        ;;
+
+        *)
+        ;;
+    esac
+    done
+
+    [[ -n "$rm" ]] && {
+        docker stop "$name" 2>/dev/null
+        docker rm "$name" 2>/dev/null
+    }
+
+    [[ -n "$run" ]] || {
+        return 0
+    }
+
+    "${xampp}"/xampp-env
+
+    mkdir -p ~/.composer
+    mkdir -p ~/.npm
+    mkdir -p ~/.ssh
+
+    # mount directories' symbolic links which are outside of the base directory as volumes to the container
+    local base=${PWD} volumes link candidate relative
+    for link in $(find "${base}" -type l); do
+        candidate=$(readlink -f "${link}")
+        [[ -d ${candidate} ]] && [[  ${candidate} != ${base}/* ]] && {
+            relative=${link:${#base}+1:100}
+            volumes="${volumes} --volume ${candidate}:/app/${relative}"
+        }
+    done;
+
+    mkdir -p ~/.local/share/xampp/"$name"
+    touch ~/.local/share/xampp/"$name"/.bash_history
+
+    docker start "$name" 2>/dev/null || docker run -td --rm --net local \
+        --name "$name" \
+        --hostname "$name" \
+        --label "traefik.enable=true" \
+        --label "traefik.http.services.$name-3000.loadbalancer.server.port=3000" \
+        --label "traefik.http.routers.$name-3000.service=$name-3000" \
+        --label "traefik.http.routers.$name-3000.entrypoints=web-3000" \
+        --label "traefik.http.routers.$name-3000.rule=Host(\`$name.localhost\`)" \
+        --label "traefik.http.services.$name.loadbalancer.server.port=80" \
+        --label "traefik.http.routers.$name.service=$name" \
+        --label "traefik.http.routers.$name.entrypoints=web" \
+        --label "traefik.http.routers.$name.rule=Host(\`$name.localhost\`)" \
+        --label "traefik.http.routers.$name.middlewares=redirect-https@docker" \
+        --label "traefik.http.routers.$name-secure.service=$name" \
+        --label "traefik.http.routers.$name-secure.entrypoints=web-secure" \
+        --label "traefik.http.routers.$name-secure.rule=Host(\`$name.localhost\`)" \
+        --label "traefik.http.routers.$name-secure.tls=true" \
+        -w /app \
+        --env POSTFIX_RELAYHOST=mail:1025 \
+        --env PHP_SENDMAIL_PATH="/usr/sbin/sendmail -t -i" \
+        --env php.session.gc_maxlifetime=864000 \
+        --env php.session.gc_divisor=1000 \
+        --env php.session.cache_expire=180 \
+        --env WEB_DOCUMENT_ROOT=/app \
+        --env WEB_ALIAS_DOMAIN="*.localhost" \
+        --env PHP_IDE_CONFIG="serverName=app" \
+        --env COMPOSER_ALLOW_XDEBUG=1 \
+        --env XDEBUG_PROFILER_ENABLE_TRIGGER=1 \
+        --env XDEBUG_CONFIG="idekey=phpstorm" \
+        --env XDEBUG_REMOTE_HOST=host.localhost \
+        --env DOCKER_XAMPP_BIN_ENV="$env" \
+        --env ACCOUNT="http://$name.localhost" \
+        --volume ~/.local/share/xampp/"$name"/.bash_history:/home/app/.bash_history \
+        --volume ~/.composer:/home/app/.composer \
+        --volume ~/.npm:/home/app/.npm \
+        --volume ~/.gitconfig:/home/app/.gitconfig:ro \
+        --volume ~/.ssh:/home/app/.ssh:ro \
+        --volume $(pwd):/app \
+        --volume $(pwd):/opt/project \
+        $volumes \
+        "$@" \
+        "xampp/app:$version"
+
+    docker exec -ti -u $UID "$name" bash
+}
+
+main "$@"
