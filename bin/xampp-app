@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
 function main() {
-    local xampp=$(dirname "$0")/ name=${PWD##*/}
+    local xampp=$(dirname "$0")/ name=${PWD##*/} version=latest env=prod run=1 i volumes mounts rm share
+    share="$HOME"/.local/share/xampp/"$name"
 
-    local i version=latest env=prod rm run=YES
+    mkdir -p "$share"
+    touch "$share"/.bash_history
+    mounts="$mounts --mount type=bind,source=$share/.bash_history,target=/home/app/.bash_history"
+
     for i in "$@"
     do
     case $i in
@@ -19,13 +23,20 @@ function main() {
 
         --rm)
         run=
-        rm=YES
+        rm=1
         shift
         ;;
 
         --restart)
-        run=YES
-        rm=YES
+        rm=1
+        shift
+        ;;
+
+        --mount-vendor)
+        rm=1
+        mkdir -p "$share"/vendor
+        mkdir -p "$(pwd)"/vendor
+        mounts="$mounts --mount type=bind,source=$share/vendor,target=/app/vendor"
         shift
         ;;
 
@@ -50,8 +61,8 @@ function main() {
     mkdir -p ~/.ssh
 
     # mount directories' symbolic links which are outside of the base directory as volumes to the container
-    local base=${PWD} volumes link candidate relative
-    local host=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
+    local base=${PWD} link candidate relative host
+    host=$(ip -4 addr show scope global dev docker0 | grep inet | awk '{print $2}' | cut -d / -f 1)
 
     for link in $(find "${base}" -type l); do
         candidate=$(readlink -f "${link}")
@@ -60,9 +71,6 @@ function main() {
             volumes="${volumes} --volume ${candidate}:/app/${relative}"
         }
     done;
-
-    mkdir -p ~/.local/share/xampp/"$name"
-    touch ~/.local/share/xampp/"$name"/.bash_history
 
     docker start "$name" 2>/dev/null || docker run -td --rm --net local \
         --name "$name" \
@@ -90,13 +98,12 @@ function main() {
         --env WEB_DOCUMENT_ROOT=/app \
         --env WEB_ALIAS_DOMAIN="*.localhost" \
         --env PHP_IDE_CONFIG="serverName=app" \
-        --env COMPOSER_ALLOW_XDEBUG=1 \
+        --env COMPOSER_ALLOW_XDEBUG=0 \
         --env XDEBUG_PROFILER_ENABLE_TRIGGER=1 \
         --env XDEBUG_CONFIG="idekey=phpstorm" \
         --env XDEBUG_REMOTE_HOST="$host" \
         --env DOCKER_XAMPP_BIN_ENV="$env" \
         --env ACCOUNT="http://$name.localhost" \
-        --volume ~/.local/share/xampp/"$name"/.bash_history:/home/app/.bash_history \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
         --volume ~/.gitconfig:/home/app/.gitconfig:ro \
@@ -104,6 +111,7 @@ function main() {
         --volume $(pwd):/app \
         --volume $(pwd):/opt/project \
         $volumes \
+        $mounts \
         "$@" \
         "xampp/app:$version"
 
