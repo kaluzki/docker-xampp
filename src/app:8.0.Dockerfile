@@ -12,6 +12,12 @@ ENV APPLICATION_GROUP app
 
 COPY opt/docker/ /opt/docker/
 RUN set -x \
+    && docker-php-ext-enable \
+       memcached \
+       apcu \
+       vips \
+       redis \
+       mongodb \
     &&  docker-run-bootstrap \
     &&  docker-image-cleanup
 
