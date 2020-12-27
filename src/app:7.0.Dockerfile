@@ -1,5 +1,5 @@
 # docker build -t xampp/app:7.0 src -f src/app:7.0.Dockerfile
-# bin/xampp-up :7.0 --env DOCKER_XAMPP_BIN_ENV=dev
+# bin/xampp-app :7.0 --env DOCKER_XAMPP_BIN_ENV=dev
 
 # Distributor ID:	Debian
 # Description:	Debian GNU/Linux 9.6 (stretch)
