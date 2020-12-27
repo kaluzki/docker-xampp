@@ -99,9 +99,8 @@ function main() {
         --env WEB_ALIAS_DOMAIN="*.localhost" \
         --env PHP_IDE_CONFIG="serverName=app" \
         --env COMPOSER_ALLOW_XDEBUG=0 \
-        --env XDEBUG_PROFILER_ENABLE_TRIGGER=1 \
         --env XDEBUG_CONFIG="idekey=phpstorm" \
-        --env XDEBUG_REMOTE_HOST="$host" \
+        --env XDEBUG_CLIENT_HOST="$host" \
         --env DOCKER_XAMPP_BIN_ENV="$env" \
         --env ACCOUNT="http://$name.localhost" \
         --volume ~/.composer:/home/app/.composer \
