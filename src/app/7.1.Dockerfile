@@ -1,11 +1,11 @@
-# docker build -t xampp/app:7.0 src -f src/app:7.0.Dockerfile
-# bin/xampp-app :7.0 --env DOCKER_XAMPP_BIN_ENV=dev
+# docker build -t xampp/app:7.1 -t src/app -f src/app/7.1.Dockerfile
+# bin/xampp-app --env DOCKER_XAMPP_BIN_ENV=dev
 
 # Distributor ID:	Debian
-# Description:	Debian GNU/Linux 9.6 (stretch)
-# Release:	9.6
+# Description:	Debian GNU/Linux 9.11 (stretch)
+# Release:	9.11
 # Codename:	stretch
-FROM webdevops/php-apache-dev:7.0
+FROM webdevops/php-apache-dev:7.1
 
 ENV APPLICATION_USER app
 ENV APPLICATION_GROUP app
