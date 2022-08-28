@@ -1,32 +1,32 @@
 #!/usr/bin/env bash
 
 function main() {
-    local network=local
+    local network=xampp
     docker network inspect ${network} > /dev/null 2>&1 || docker network create ${network} > /dev/null 2>&1
 
     local host user pass
 
     if [[ ${1} ]]; then
-        host=${1}
+      host=${1}
     else
-        read -p "mysql server: " host
+      read -r -p "mysql server: " host
     fi
 
-    docker volume inspect ${host} > /dev/null 2>&1 || docker volume create ${host} > /dev/null 2>&1
+    docker volume inspect "${host}" > /dev/null 2>&1 || docker volume create "${host}" > /dev/null 2>&1
 
     docker start ${host} 2>/dev/null || {
-        read -p "mysql user: " user
-        read -s -p "mysql password: " pass
-        printf "\n"
+      read -r -p "mysql user: " user
+      read -r -s -p "mysql password: " pass
+      printf "\n"
 
-        docker run -d --hostname ${host} --name ${host} --network ${network} \
-            --restart unless-stopped \
-            --volume ${host}:/var/lib/mysql \
-            --env MYSQL_DATABASE=${user} \
-            --env MYSQL_USER=${user} \
-            --env MYSQL_PASSWORD=${pass} \
-            --env MYSQL_ROOT_PASSWORD=${pass} \
-            xampp/mysql
+      docker run -d --hostname "${host}" --name "${host}" --network "${network}" --restart unless-stopped \
+        --volume "${host}:/var/lib/mysql" \
+        -p 3306:3306 \
+        --env "MYSQL_DATABASE=${user}" \
+        --env "MYSQL_USER=${user}" \
+        --env "MYSQL_PASSWORD=${pass}" \
+        --env "MYSQL_ROOT_PASSWORD=${pass}" \
+        xampp/mysql
     }
 }
 

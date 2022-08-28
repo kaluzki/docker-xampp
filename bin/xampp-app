@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 
 function main() {
-    local xampp=$(dirname "$0")/ name=${PWD##*/} version=latest env=prod run=1 i volumes mounts rm share
-    share="$HOME"/.local/share/xampp/"$name"
-
-    mkdir -p "$share"
-    touch "$share"/.bash_history
-    mounts="$mounts --mount type=bind,source=$share/.bash_history,target=/home/app/.bash_history"
+    local name=${PWD##*/} version=latest env=prod run=1 i volumes mounts rm args
+    local network=xampp
+    local tld=".app.localhost"
 
     for i in "$@"
     do
-    case $i in
+      case $i in
         :*)
         version="${i#*:}"
         shift
@@ -18,6 +15,21 @@ function main() {
 
         @*)
         env="${i#*@}"
+        shift
+        ;;
+
+        --name=*)
+        name="${i#*=}"
+        shift
+        ;;
+
+        --network=*)
+        network="${i#*=}"
+        shift
+        ;;
+
+        --tld=*)
+        tld="${i#*=}"
         shift
         ;;
 
@@ -32,18 +44,17 @@ function main() {
         shift
         ;;
 
-        --mount-vendor)
-        rm=1
-        mkdir -p "$share"/vendor
-        mkdir -p "$(pwd)"/vendor
-        mounts="$mounts --mount type=bind,source=$share/vendor,target=/app/vendor"
+        *)
+        args="${args} ${i}"
         shift
         ;;
-
-        *)
-        ;;
-    esac
+      esac
     done
+
+    local share="$HOME"/.local/share/xampp/"$name"
+    mkdir -p "$share"
+    touch "$share"/.bash_history
+    mounts="$mounts --mount type=bind,source=$share/.bash_history,target=/home/app/.bash_history"
 
     [[ -n "$rm" ]] && {
         docker stop "$name" 2>/dev/null
@@ -53,8 +64,6 @@ function main() {
     [[ -n "$run" ]] || {
         return 0
     }
-
-    "${xampp}"/xampp-env
 
     mkdir -p ~/.composer
     mkdir -p ~/.npm
@@ -72,37 +81,27 @@ function main() {
         }
     done;
 
-    docker start "$name" 2>/dev/null || docker run -td --rm --net local \
+    docker start "$name" 2>/dev/null || docker run -td --rm --network "$network" \
         --name "$name" \
         --hostname "$name" \
         --label "traefik.enable=true" \
-        --label "traefik.http.services.$name-3000.loadbalancer.server.port=3000" \
-        --label "traefik.http.routers.$name-3000.service=$name-3000" \
-        --label "traefik.http.routers.$name-3000.entrypoints=web-3000" \
-        --label "traefik.http.routers.$name-3000.rule=Host(\`$name.localhost\`)" \
-        --label "traefik.http.services.$name.loadbalancer.server.port=80" \
-        --label "traefik.http.routers.$name.service=$name" \
-        --label "traefik.http.routers.$name.entrypoints=web" \
-        --label "traefik.http.routers.$name.rule=Host(\`$name.localhost\`)" \
-        --label "traefik.http.routers.$name.middlewares=redirect-https@docker" \
-        --label "traefik.http.routers.$name-secure.service=$name" \
-        --label "traefik.http.routers.$name-secure.entrypoints=web-secure" \
-        --label "traefik.http.routers.$name-secure.rule=Host(\`$name.localhost\`)" \
-        --label "traefik.http.routers.$name-secure.tls=true" \
+        --label "traefik.http.routers.${name}.entrypoints=443" \
+        --label "traefik.http.routers.${name}.rule=Host(\`${name}${tld}\`)" \
+        --label "traefik.http.routers.${name}.tls=true" \
         -w /app \
-        --env POSTFIX_RELAYHOST=mail:1025 \
+        --env POSTFIX_RELAYHOST=mailhog:1025 \
         --env PHP_SENDMAIL_PATH="/usr/sbin/sendmail -t -i" \
         --env php.session.gc_maxlifetime=864000 \
         --env php.session.gc_divisor=1000 \
         --env php.session.cache_expire=180 \
         --env WEB_DOCUMENT_ROOT=/app \
-        --env WEB_ALIAS_DOMAIN="*.localhost" \
+        --env WEB_ALIAS_DOMAIN="*${tld}" \
         --env PHP_IDE_CONFIG="serverName=app" \
         --env COMPOSER_ALLOW_XDEBUG=0 \
         --env XDEBUG_CONFIG="idekey=phpstorm" \
         --env XDEBUG_CLIENT_HOST="$host" \
         --env DOCKER_XAMPP_BIN_ENV="$env" \
-        --env ACCOUNT="http://$name.localhost" \
+        --env ACCOUNT="http://${name}${tld}" \
         --volume ~/.composer:/home/app/.composer \
         --volume ~/.npm:/home/app/.npm \
         --volume ~/.gitconfig:/home/app/.gitconfig:ro \
@@ -111,7 +110,7 @@ function main() {
         --volume $(pwd):/opt/project \
         $volumes \
         $mounts \
-        "$@" \
+        $args \
         "xampp/app:$version"
 
     docker exec -ti -u $UID "$name" bash

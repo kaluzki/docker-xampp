@@ -2,7 +2,10 @@
 
 function main() {
     printf "xampp env:\n"
-    local network=local base=$(dirname $(readlink -f "$0"))/
+    local base=$(dirname $(readlink -f "$0"))
+    local network=xampp
+    local tld=".app.localhost"
+    local share="$HOME"/.local/share/xampp/traefik
 
     local i rm run=YES
     for i in "$@"
@@ -28,93 +31,76 @@ function main() {
     [[ -n "$rm" ]] && {
         printf "removing ...\n"
 
-        local images="dns proxy mail pma mysql"
+        local images="traefik mailhog pma"
 
         docker stop $images 2>/dev/null
         docker rm $images 2>/dev/null
         docker network rm "$network" 2>/dev/null
+        docker volume rm acme 2>/dev/null
     }
 
     [[ -n "$run" ]] || {
         return 0
     }
 
-    # chrome://flags/#allow-insecure-localhost
-
     docker network inspect "$network" > /dev/null 2>&1 || docker network create "$network" > /dev/null 2>&1
+    docker volume inspect acme > /dev/null 2>&1 || {
+      mkdir -p "${share}"
+      docker volume create acme > /dev/null 2>&1
+      docker run --rm -v acme:/tmp busybox \
+        sh -c "touch /tmp/acme.json && chmod -Rv 600 /tmp/acme.json" > /dev/null 2>&1
+    }
 
-    docker start dns 2>/dev/null || docker run -d --hostname dns --name dns --network "$network" \
-        --label "traefik.enable=true" \
-        --label "traefik.http.services.dns.loadbalancer.server.port=5380" \
-        --label "traefik.http.routers.dns.service=dns" \
-        --label "traefik.http.routers.dns.entrypoints=web" \
-        --label "traefik.http.routers.dns.rule=Host(\`dns.localhost\`)" \
-        --label "traefik.http.routers.dns.middlewares=redirect-https@docker" \
-        --label "traefik.http.routers.dns-secure.entrypoints=web-secure" \
-        --label "traefik.http.routers.dns-secure.rule=Host(\`dns.localhost\`)" \
-        --label "traefik.http.routers.dns-secure.tls=true" \
-        --env "MG_REGISTER_CONTAINER_NAMES=1" \
-        --env "MG_DOMAIN=.localhost" \
-        --env "MG_HOST_MACHINE_HOSTNAME=host.localhost" \
-        --restart unless-stopped \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v /etc/resolv.conf:/etc/resolv.conf \
-        xampp/dns
-    echo http://dns.localhost
+    docker start traefik 2>/dev/null || docker run -d --hostname traefik --name traefik --network "$network" \
+      --label "traefik.enable=true" \
+      --label "traefik.http.routers.traefik.middlewares=basicauth@file" \
+      --label "traefik.http.routers.traefik.service=api@internal" \
+      --label "traefik.http.routers.traefik.entrypoints=443" \
+      --label "traefik.http.routers.traefik.tls.certresolver=letsencrypt" \
+      --label "traefik.http.routers.traefik.rule=Host(\`traefik${tld}\`)" \
+      --restart unless-stopped \
+      -v /var/run/docker.sock:/var/run/docker.sock:ro \
+      -v acme:/acme \
+      -v "${share}":/etc/traefik \
+      -p 80:80 -p 443:443 \
+      traefik:2.8 \
+      --api=true \
+      --api.insecure=false \
+      --log.level=error \
+      --entrypoints.80.address=:80 \
+      --entrypoints.80.http.redirections.entrypoint.to=:443 \
+      --entrypoints.80.http.redirections.entrypoint.scheme=https \
+      --entrypoints.80.http.redirections.entrypoint.permanent=true \
+      --entrypoints.443.address=:443 \
+      --providers.file.directory=/etc/traefik \
+      --providers.file.watch=true \
+      --providers.docker=true \
+      --providers.docker.network="$network" \
+      --providers.docker.exposedByDefault=false \
+      --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json \
+      --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=80
+    echo http://traefik${tld}
 
-    docker start proxy 2>/dev/null || docker run -d --hostname .localhost --name proxy --network "$network" \
+    docker start mailhog 2>/dev/null || docker run -d --hostname mailhog --name mailhog --network "$network" \
         --label "traefik.enable=true" \
-        --label "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https" \
-        --label "traefik.http.services.proxy.loadbalancer.server.port=8080" \
-        --label "traefik.http.routers.proxy.service=proxy" \
-        --label "traefik.http.routers.proxy.entrypoints=web" \
-        --label "traefik.http.routers.proxy.rule=Host(\`proxy.localhost\`)" \
-        --label "traefik.http.routers.proxy.middlewares=redirect-https@docker" \
-        --label "traefik.http.routers.proxy-secure.entrypoints=web-secure" \
-        --label "traefik.http.routers.proxy-secure.rule=Host(\`proxy.localhost\`)" \
-        --label "traefik.http.routers.proxy-secure.tls=true" \
+        --label "traefik.http.services.mailhog.loadbalancer.server.port=8025" \
+        --label "traefik.http.routers.mailhog.service=mailhog" \
+        --label "traefik.http.routers.mailhog.entrypoints=443" \
+        --label "traefik.http.routers.mailhog.rule=Host(\`mailhog${tld}\`)" \
+        --label "traefik.http.routers.mailhog.tls=true" \
         --restart unless-stopped \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        --expose 3000 \
-        -p 80:80 -p 443:443 -p 3000:3000 \
-        xampp/proxy \
-        --api=true \
-        --api.insecure=true \
-        --log.level=info \
-        --entrypoints.web-3000.address=:3000 \
-        --entrypoints.web.address=:80 \
-        --entrypoints.web-secure.address=:443 \
-        --providers.docker=true \
-        --providers.docker.network=local \
-        --providers.docker.exposedByDefault=false
-    echo http://proxy.localhost
-
-    docker start mail 2>/dev/null || docker run -d --hostname mail --name mail --network "$network" \
-        --label "traefik.enable=true" \
-        --label "traefik.http.services.mail.loadbalancer.server.port=8025" \
-        --label "traefik.http.routers.mail.service=mail" \
-        --label "traefik.http.routers.mail.entrypoints=web" \
-        --label "traefik.http.routers.mail.rule=Host(\`mail.localhost\`)" \
-        --label "traefik.http.routers.mail.middlewares=redirect-https@docker" \
-        --label "traefik.http.routers.mail-secure.entrypoints=web-secure" \
-        --label "traefik.http.routers.mail-secure.rule=Host(\`mail.localhost\`)" \
-        --label "traefik.http.routers.mail-secure.tls=true" \
-        --restart unless-stopped \
-        xampp/mail
-    echo http://mail.localhost
+        mailhog/mailhog
+    echo http://mailhog${tld}
 
     docker start pma 2>/dev/null || docker run -d --hostname pma --name pma --network "$network" \
         --label "traefik.enable=true" \
-        --label "traefik.http.routers.pma.entrypoints=web" \
-        --label "traefik.http.routers.pma.rule=Host(\`pma.localhost\`)" \
-        --label "traefik.http.routers.pma.middlewares=redirect-https@docker" \
-        --label "traefik.http.routers.pma-secure.entrypoints=web-secure" \
-        --label "traefik.http.routers.pma-secure.rule=Host(\`pma.localhost\`)" \
-        --label "traefik.http.routers.pma-secure.tls=true" \
+        --label "traefik.http.routers.pma.entrypoints=443" \
+        --label "traefik.http.routers.pma.rule=Host(\`pma${tld}\`)" \
+        --label "traefik.http.routers.pma.tls=true" \
         --env "PMA_ARBITRARY=1" \
         --restart unless-stopped \
-        xampp/pma
-    echo http://pma.localhost
+        phpmyadmin/phpmyadmin
+    echo http://pma${tld}
 
     docker start mysql 2>/dev/null || . "$base/xampp-mysql" mysql
 }
