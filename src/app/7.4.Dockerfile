@@ -1,9 +1,9 @@
-# docker build -t xampp/app:7.4 -t xampp/app src/app -f src/app/7.4.Dockerfile
-# bin/xampp-app :7.4 --env DOCKER_XAMPP_BIN_ENV=dev
+# docker build -t xampp/app:7.4 -f src/app/7.4.Dockerfile
+# docker run --rm -ti xampp/app:7.4 bash
 
-# Distributor ID:	Debian
-# Description:	Debian GNU/Linux 10 (buster)
-# Release:	10
+# Distributor ID: Debian
+# Description: Debian GNU/Linux 10 (buster)
+# Release: 10
 # Codename:	buster
 FROM webdevops/php-apache-dev:7.4
 
