@@ -81,11 +81,15 @@ EOF
 COPY <<EOF /usr/local/bin/php-dev
 #! /bin/sh
 set -e
+export XDEBUG_TRIGGER=1
 exec php-prod -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
 EOF
 
 COPY <<EOF /usr/local/etc/php/conf.d/xdebug.ini
-xdebug.mode=debug
+xdebug.mode=debug,develop
+xdebug.start_with_request=trigger
+xdebug.log_level=0
+xdebug.connect_timeout_ms=50
 xdebug.discover_client_host=yes
 xdebug.client_host=host.docker.internal
 EOF
@@ -188,4 +192,5 @@ EOF
 
 USER ${user}
 WORKDIR /app
+ENV PHP_IDE_CONFIG="serverName=app.localhost"
 
