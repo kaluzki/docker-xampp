@@ -1,0 +1,33 @@
+networks:
+  default:
+    name: ${ENV_NET-env}
+    external: true
+
+volumes:
+  php-socket:
+
+services:
+  php:
+    image: xampp/php
+    hostname: ${COMPOSE_PROJECT_NAME}-php
+    volumes:
+      - .:/app
+      - php-socket:/var/run/php
+
+  httpd:
+    image: xampp/httpd
+    depends_on:
+      - php
+    hostname: ${COMPOSE_PROJECT_NAME}-httpd
+    volumes:
+      - .:/app
+      - php-socket:/var/run/php
+#    healthcheck:
+#      test: "curl -f http://localhost"
+#      start_period: 1s
+#      start_interval: 2s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-httpd.entrypoints=443
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-httpd.tls=true
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-httpd.rule=Host(`${ENV_URL:-${COMPOSE_PROJECT_NAME}.app.localhost}`)
