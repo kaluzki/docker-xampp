@@ -1,34 +1,53 @@
 # docker build src/php -f src/php/Dockerfile -t xampp/php:8.5 -t xampp/php
-# docker build src/php -f src/php/Dockerfile -t xampp/php:8.4 --build-arg php=8.4-fpm
-# docker build src/php -f src/php/Dockerfile -t xampp/php:7.4 --build-arg php=7.4-fpm --build-arg xdebug=3.1.6
+# docker build src/php -f src/php/Dockerfile -t xampp/php:8.4 --build-arg from=php:8.4-fpm
+# docker build src/php -f src/php/Dockerfile -t xampp/php:7.4 --build-arg from=php:7.4-fpm --build-arg xdebug=3.1.6
 # docker run --rm -ti xampp/php:7.4 bash
 
-ARG php=8.5-fpm
-ARG xdebug=stable
-FROM php:${php}
+ARG from=php:8.5-fpm
+FROM ${from}
 
-ARG xdebug
 RUN <<EOF
-set -e
-apt-get update
-apt-get install -y --no-install-recommends \
-    bash-completion \
-    unzip
-docker-php-ext-install \
-    pcntl \
-    pdo \
-    pdo_mysql \
-    sockets
-pecl install xdebug-${xdebug}
-rm -rf /var/lib/apt/lists/*
-curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+    --mount=type=cache,target=/var/cache/apt,sharing=locked
+    --mount=type=cache,target=/var/lib/apt,sharing=locked
+    set -eux
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bash-completion \
+        unzip
+EOF
+
+ARG xdebug=stable
+RUN <<EOF
+    set -eux
+    docker-php-ext-install \
+        pcntl \
+        pdo \
+        pdo_mysql \
+        sockets
+    pecl install xdebug-${xdebug}
+EOF
+
+### COPY
+COPY --from=xampp/base /etc/bash.bashrc /etc/bash.bashrc
+COPY --from=xampp/base /etc/xampp.d/ /etc/xampp.d/
+COPY --from=xampp/base /etc/gitconfig /etc/gitconfig
+COPY --from=xampp/base /usr/local/bin/starship /usr/local/bin/starship
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+COPY --from=ghcr.io/roadrunner-server/roadrunner /usr/bin/rr /usr/local/bin/rr
+
+RUN <<EOF
+    set -eux
+    composer completion bash > /usr/share/bash-completion/completions/composer
+    rr completion bash > /usr/share/bash-completion/completions/rr
 EOF
 
 ### USER
 ARG user=app
+ARG uid=1000
 RUN <<EOF
-groupadd -g 1000 ${user}
-useradd -u 1000 -g 1000 -m -s /bin/bash -k /dev/null ${user}
+    set -eux
+    groupadd -g ${uid} ${user}
+    useradd -u ${uid} -g ${uid} -m -s /bin/bash -k /dev/null ${user}
 EOF
 
 ### PHP-FPM
@@ -42,12 +61,13 @@ listen.group=${user}
 EOF
 
 RUN <<EOF
-[ -f /usr/local/sbin/php-fpm ] && mv /usr/local/sbin/php-fpm /usr/local/sbin/php-fpm-prod || true
-mkdir -p /var/run/php
-chown ${user}:${user} /var/run/php
+    set -eux
+    [ -f /usr/local/sbin/php-fpm ] && mv /usr/local/sbin/php-fpm /usr/local/sbin/php-fpm-prod || true
+    mkdir -p /var/run/php
+    chown ${user}:${user} /var/run/php
 EOF
 
-COPY <<EOF /usr/local/sbin/php-fpm
+COPY --chmod=755 <<EOF /usr/local/sbin/php-fpm
 #! /bin/sh
 set -e
 APP_ENV=\${APP_ENV:-prod}
@@ -58,7 +78,7 @@ else
 fi
 EOF
 
-COPY <<EOF /usr/local/sbin/php-fpm-dev
+COPY --chmod=755 <<EOF /usr/local/sbin/php-fpm-dev
 #! /bin/sh
 set -e
 exec php-fpm-prod -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
@@ -67,7 +87,7 @@ EOF
 ### PHP
 RUN mv /usr/local/bin/php /usr/local/bin/php-prod
 
-COPY <<EOF /usr/local/bin/php
+COPY --chmod=755 <<EOF /usr/local/bin/php
 #! /bin/sh
 set -e
 APP_ENV=\${APP_ENV:-prod}
@@ -78,7 +98,7 @@ else
 fi
 EOF
 
-COPY <<EOF /usr/local/bin/php-dev
+COPY --chmod=755 <<EOF /usr/local/bin/php-dev
 #! /bin/sh
 set -e
 export XDEBUG_TRIGGER=1
@@ -94,103 +114,6 @@ xdebug.discover_client_host=yes
 xdebug.client_host=host.docker.internal
 EOF
 
-COPY --from=composer /usr/bin/composer /usr/local/bin/composer
-COPY --from=ghcr.io/roadrunner-server/roadrunner /usr/bin/rr /usr/local/bin/rr
-
-RUN <<EOF
-chmod +x -R /usr/local/bin
-chmod +x -R /usr/local/sbin
-composer completion bash > /usr/share/bash-completion/completions/composer
-rr completion bash > /usr/share/bash-completion/completions/rr
-starship completions bash > /usr/share/bash-completion/completions/starship
-EOF
-
-RUN <<EOF cat >> /etc/bash.bashrc
-[[ -f /etc/bash_completion ]] && . /etc/bash_completion
-[[ -d "/etc/bashrc.d" ]] && {
-  for script in "/etc/bashrc.d/"*.sh; do
-    . "\$script"
-  done
-  unset script
-}
-EOF
-
-COPY <<EOF /etc/bashrc.d/10-xampp.sh
-### prompt
-set -o noclobber
-shopt -s checkwinsize
-# PROMPT_DIRTRIM=2
-bind Space:magic-space
-shopt -s globstar 2> /dev/null
-shopt -s nocaseglob;
-bind "set completion-ignore-case on"
-bind "set completion-map-case on"
-bind "set show-all-if-ambiguous on"
-bind "set mark-symlinked-directories on"
-
-### history
-PROMPT_COMMAND='history -a'
-shopt -s histappend
-shopt -s cmdhist
-HISTFILESIZE=100000
-HISTCONTROL="erasedups:ignoreboth"
-HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
-HISTTIMEFORMAT='%F %T '
-bind '"\e[A": history-search-backward'
-bind '"\e[B": history-search-forward'
-bind '"\e[C": forward-char'
-bind '"\e[D": backward-char'
-
-### navigation
-export LC_COLLATE="C"
-shopt -s autocd 2> /dev/null
-shopt -s dirspell 2> /dev/null
-shopt -s cdspell 2> /dev/null
-#CDPATH="."
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias .....='cd ../../../..'
-alias ......='cd ../../../../..'
-alias ll='ls --group-directories-first -FlAh --color=auto'
-alias l='ls --group-directories-first -Flah --color=auto'
-alias lt='ls --group-directories-first -FAlht --color=auto'
-
-### disk usage
-alias du='du -h'
-alias df='df -h'
-alias dus='du -hs .'
-
-### grep
-alias gr='grep -Hirn --exclude-dir=.git --exclude-dir=.svn --exclude-dir=.idea'
-EOF
-
-#ADD --chmod=644 \
-#https://raw.githubusercontent.com/twolfson/sexy-bash-prompt/refs/tags/1.1.0/.bash_prompt \
-#/etc/bashrc.d/sexy-bash-prompt.sh
-
-###STARSHIP
-COPY <<EOF /etc/starship.d/starship.toml
-add_newline = false
-[hostname]
-ssh_only = false
-trim_at = ''
-#format = '[\$ssh_symbol](bold blue)\e]8;;https://\$hostname\a[\$hostname](bold red)\e]8;;\a '
-#format = '[\$ssh_symbol](bold blue)[\e]8;;https://\$hostname\a\$hostname\e]8;;\a](bold red) '
-format = '[\$ssh_symbol](bold blue)[https://\$hostname](bold red) '
-[git_branch]
-symbol = '🌱 '
-[container]
-disabled = true
-EOF
-COPY <<EOF /etc/bashrc.d/90-starship.sh
-[[ "\${ENV_PROMPT-starship}" == "starship" ]] && which starship > /dev/null && {
-  export STARSHIP_CONFIG=/etc/starship.d/starship.toml
-  eval "$(starship init bash)"
-}
-EOF
-
 USER ${user}
 WORKDIR /app
 ENV PHP_IDE_CONFIG="serverName=app.localhost"
-

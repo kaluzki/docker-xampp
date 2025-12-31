@@ -1,0 +1,16 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = false
+
+[git_branch]
+symbol = '🌱 '
+
+[container]
+disabled = true
+
+[custom.hostname]
+when = "hostname | grep -q '\\.'"
+command = '''
+h=$(hostname)
+printf "\033]8;;https://$h\033\\\\$h\033]8;;\\033\\\\"
+'''
