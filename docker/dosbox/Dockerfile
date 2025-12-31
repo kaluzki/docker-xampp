@@ -1,4 +1,4 @@
-# docker build src/dosbox -f src/dosbox/Dockerfile -t xampp/dosbox
+# docker build docker/dosbox -f docker/dosbox/Dockerfile -t xampp/dosbox
 # docker run --rm -ti xampp/dosbox bash
 
 FROM xampp/base
@@ -39,5 +39,3 @@ mididevice=none
 [dos]
 keyboardlayout=gr
 EOF
-
-WORKDIR /app

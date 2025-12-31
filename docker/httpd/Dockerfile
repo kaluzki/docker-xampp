@@ -1,7 +1,7 @@
-# docker build src/httpd -f src/httpd/Dockerfile -t xampp/httpd:2.4 -t xampp/httpd
+# docker build docker/httpd -f docker/httpd/Dockerfile -t xampp/httpd:2.4 -t xampp/httpd
 
-ARG httpd=2.4
-FROM httpd:${httpd}
+ARG from=httpd:2.4
+FROM ${from}
 
 RUN <<EOF
 usermod -u 1000 www-data

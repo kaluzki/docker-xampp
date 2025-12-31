@@ -1,6 +1,6 @@
-# docker build src/php -f src/php/Dockerfile -t xampp/php:8.5 -t xampp/php
-# docker build src/php -f src/php/Dockerfile -t xampp/php:8.4 --build-arg from=php:8.4-fpm
-# docker build src/php -f src/php/Dockerfile -t xampp/php:7.4 --build-arg from=php:7.4-fpm --build-arg xdebug=3.1.6
+# docker build docker/php -f docker/php/Dockerfile -t xampp/php:8.5 -t xampp/php
+# docker build docker/php -f docker/php/Dockerfile -t xampp/php:8.4 --build-arg from=php:8.4-fpm
+# docker build docker/php -f docker/php/Dockerfile -t xampp/php:7.4 --build-arg from=php:7.4-fpm --build-arg xdebug=3.1.6
 # docker run --rm -ti xampp/php:7.4 bash
 
 ARG from=php:8.5-fpm

@@ -1,4 +1,4 @@
-# docker build src/base -f src/base/Dockerfile -t xampp/base
+# docker build docker/base -f docker/base/Dockerfile -t xampp/base
 # docker run --rm -ti xampp/base bash
 
 ARG from=debian:trixie-slim
@@ -45,6 +45,9 @@ RUN <<EOF
     set -eux
     groupadd -g ${uid} ${user}
     useradd -u ${uid} -g ${uid} -m -s /bin/bash -k /dev/null ${user}
+    mkdir -p /app /opt /resources
+    chown ${uid}:${uid} /app /opt /resources
 EOF
 
 USER ${user}
+WORKDIR /app
