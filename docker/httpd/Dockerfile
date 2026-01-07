@@ -13,6 +13,11 @@ EOF
 USER www-data
 ENV APP_DOCUMENT_ROOT=/app/public
 COPY --chown=www-data:www-data <<EOF $HTTPD_PREFIX/conf/xampp.conf
+LoadModule negotiation_module modules/mod_negotiation.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule deflate_module modules/mod_deflate.so
+
 LoadModule remoteip_module modules/mod_remoteip.so
 RemoteIPHeader X-Forwarded-For
 RemoteIPInternalProxy 172.16.0.0/12
