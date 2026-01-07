@@ -13,17 +13,23 @@ RUN <<EOF
     apt-get update
     apt-get install -y --no-install-recommends \
         bash-completion \
+        zlib1g-dev \
+        libpng-dev \
+        libjpeg-dev \
+        libfreetype6-dev \
         unzip
 EOF
 
 ARG xdebug=stable
 RUN <<EOF
     set -eux
-    docker-php-ext-install \
+    docker-php-ext-configure gd --with-freetype --with-jpeg
+    docker-php-ext-install -j$(nproc) \
         pcntl \
         pdo \
         pdo_mysql \
-        sockets
+        sockets \
+        gd
     pecl install xdebug-${xdebug}
 EOF
 
