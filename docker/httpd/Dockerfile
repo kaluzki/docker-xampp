@@ -4,10 +4,25 @@ ARG from=httpd:2.4
 FROM ${from}
 
 RUN <<EOF
-usermod -u 1000 www-data
-groupmod -g 1000 www-data
-mkdir /app/public -p
-chown www-data:www-data $HTTPD_PREFIX $HTTPD_PREFIX/logs /app -R
+    --mount=type=cache,target=/var/cache/apt,sharing=locked
+    --mount=type=cache,target=/var/lib/apt,sharing=locked
+    set -eux
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bash-completion
+EOF
+
+COPY --from=xampp/base /etc/bash.bashrc /etc/bash.bashrc
+COPY --from=xampp/base /etc/xampp.d/ /etc/xampp.d/
+COPY --from=xampp/base /etc/gitconfig /etc/gitconfig
+COPY --from=xampp/base /usr/local/bin/starship /usr/local/bin/starship
+
+ARG uid=1000
+RUN <<EOF
+    usermod -u ${uid} www-data
+    groupmod -g ${uid} www-data
+    mkdir /app/public /var/www -p
+    chown www-data:www-data $HTTPD_PREFIX $HTTPD_PREFIX/logs /app /var/www -R
 EOF
 
 USER www-data
