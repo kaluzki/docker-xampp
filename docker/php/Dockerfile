@@ -56,6 +56,40 @@ RUN <<EOF
     useradd -u ${uid} -g ${uid} -m -s /bin/bash -k /dev/null ${user}
 EOF
 
+### PHP
+RUN <<EOF
+    set -eux
+    mv /usr/local/bin/php /usr/local/bin/php-prod
+    cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+EOF
+
+COPY --chmod=755 <<EOF /usr/local/bin/php
+#! /bin/sh
+set -e
+APP_ENV=\${APP_ENV:-prod}
+if [ "\$APP_ENV" != "prod" -a "\$APP_ENV" != "production" ]; then
+  exec php-dev "\$@"
+else
+  exec php-prod "\$@"
+fi
+EOF
+
+COPY --chmod=755 <<EOF /usr/local/bin/php-dev
+#! /bin/sh
+set -e
+export XDEBUG_TRIGGER=1
+exec php-prod -c /usr/local/etc/php/php.ini-development -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
+EOF
+
+COPY <<EOF /usr/local/etc/php/conf.d/xdebug.ini
+xdebug.mode=debug,develop
+xdebug.start_with_request=trigger
+xdebug.log_level=0
+xdebug.connect_timeout_ms=50
+xdebug.discover_client_host=yes
+xdebug.client_host=host.docker.internal
+EOF
+
 ### PHP-FPM
 COPY <<EOF /usr/local/etc/php-fpm.d/zz-xampp.conf
 [www]
@@ -87,38 +121,9 @@ EOF
 COPY --chmod=755 <<EOF /usr/local/sbin/php-fpm-dev
 #! /bin/sh
 set -e
-exec php-fpm-prod -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
+exec php-fpm-prod -c /usr/local/etc/php/php.ini-development -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
 EOF
 
-### PHP
-RUN mv /usr/local/bin/php /usr/local/bin/php-prod
-
-COPY --chmod=755 <<EOF /usr/local/bin/php
-#! /bin/sh
-set -e
-APP_ENV=\${APP_ENV:-prod}
-if [ "\$APP_ENV" != "prod" -a "\$APP_ENV" != "production" ]; then
-  exec php-dev "\$@"
-else
-  exec php-prod "\$@"
-fi
-EOF
-
-COPY --chmod=755 <<EOF /usr/local/bin/php-dev
-#! /bin/sh
-set -e
-export XDEBUG_TRIGGER=1
-exec php-prod -d zend_extension=$(php-config --extension-dir)/xdebug.so "\$@"
-EOF
-
-COPY <<EOF /usr/local/etc/php/conf.d/xdebug.ini
-xdebug.mode=debug,develop
-xdebug.start_with_request=trigger
-xdebug.log_level=0
-xdebug.connect_timeout_ms=50
-xdebug.discover_client_host=yes
-xdebug.client_host=host.docker.internal
-EOF
 
 USER ${user}
 WORKDIR /app
