@@ -36,6 +36,7 @@ LoadModule deflate_module modules/mod_deflate.so
 LoadModule remoteip_module modules/mod_remoteip.so
 RemoteIPHeader X-Forwarded-For
 RemoteIPInternalProxy 172.16.0.0/12
+SetEnvIf X-Forwarded-Proto https HTTPS=on
 
 LoadModule proxy_module modules/mod_proxy.so
 LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
