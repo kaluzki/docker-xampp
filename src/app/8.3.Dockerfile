@@ -1,21 +1,28 @@
-# docker build -t xampp/app:7.4 -f src/app/7.4.Dockerfile
-# docker run --rm -ti xampp/app:7.4 bash
+# docker build -t xampp/app:8.3 src/app -t xampp/app -f src/app/8.3.Dockerfile
+# docker run --rm -ti xampp/app bash
 
 # Distributor ID: Debian
 # Description: Debian GNU/Linux 10 (buster)
 # Release: 10
 # Codename:	buster
-FROM webdevops/php-apache-dev:7.4
+FROM webdevops/php-apache-dev:8.3
 
-ENV APPLICATION_USER app
-ENV APPLICATION_GROUP app
+ENV APPLICATION_USER=app
+ENV APPLICATION_GROUP=app
 
 COPY opt/docker/ /opt/docker/
+
 RUN <<EOF
 set -x
 apt-get update
 apt-get install -y --no-install-recommends \
     jq
+docker-php-ext-enable \
+    memcached \
+    apcu \
+    vips \
+    redis \
+    mongodb
 docker-run-bootstrap
 docker-image-cleanup
 rm /usr/local/etc/php/conf.d/*ioncube.ini -f

@@ -1,11 +1,11 @@
-# docker build -t xampp/app:8.0 src/app -f src/app/8.0.Dockerfile
-# docker run --rm -ti xampp/app:8.0 bash
+# docker build -t xampp/app:8.1 src/app -f src/app/8.1.Dockerfile
+# docker run --rm -ti xampp/app:8.1 bash
 
-# Distributor ID:	Debian
-# Description:	Debian GNU/Linux 10 (buster)
-# Release:	10
-# Codename:	buster
-FROM webdevops/php-apache-dev:8.0
+# Distributor ID: Debian
+# Description: Debian GNU/Linux 10 (buster)
+# Release: 10
+# Codename: buster
+FROM webdevops/php-apache-dev:8.1
 
 ENV APPLICATION_USER app
 ENV APPLICATION_GROUP app
