@@ -1,16 +1,10 @@
-/*
+# --- SECURE BY DEFAULT: HIDDEN FILES ---
+# Ignore all files and directories starting with a dot (recursive)
+.*
+.*/
 
-!/.github
-!/bin/
-!/resources/
-!/src/
-!/tests/
-!/docker/
-!/example/
+# EXCEPTIONS: Explicitly whitelist essential hidden files and folders
+!.gitignore
+!.gitkeep
 !/.gitattributes
-!/.gitignore
-!/composer.json
-!/LICENSE
-!/CHANGELOG.md
-!/README.md
-!/AGENTS.md
+!/.github
