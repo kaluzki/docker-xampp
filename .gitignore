@@ -2,6 +2,7 @@
 
 !/.github
 !/bin/
+!/exp
 !/resources/
 !/src/
 !/tests/

@@ -1,0 +1,7 @@
+#cloud-config
+system_info:
+  default_user:
+    name: foo
+    plain_text_passwd: bar
+    lock_passwd: false
+
