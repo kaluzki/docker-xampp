@@ -1,7 +1,7 @@
 {
   "type": "library",
   "name": "docker-xampp/bin",
-  "description": "docker images docker/xampp",
+  "description": "docker images docker/xampp (DEPRECATED: Use https://github.com/kaluzki/env instead)",
   "license": "MIT",
   "bin": [
     "bin/xampp-app",

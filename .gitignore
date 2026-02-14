@@ -5,7 +5,12 @@
 !/resources/
 !/src/
 !/tests/
+!/docker/
+!/example/
 !/.gitattributes
 !/.gitignore
 !/composer.json
 !/LICENSE
+!/CHANGELOG.md
+!/README.md
+!/AGENTS.md
