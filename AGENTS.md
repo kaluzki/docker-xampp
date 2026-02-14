@@ -38,7 +38,8 @@ This file contains context and instructions for AI agents working on the XAMPP D
 
 ## Pending Tasks
 
-### 1. Verify Docker Hub Image Dates
+### 1. Verify Docker Hub Image Dates [DONE]
 *   **Goal**: Find the exact push dates for the experimental PHP images (`xampp/app:8.4`, `xampp/app:8.3`, `xampp/app:8.1`) on Docker Hub (`https://hub.docker.com/u/xampp`).
 *   **Action**: Update `CHANGELOG.md` and `README.md` with the correct dates instead of the commit date (Feb 2026).
-*   **Context**: These images were available on Docker Hub for some time but were only recently committed to the repository. Note that the Dockerfiles use `webdevops/php-apache-dev` as base images, but the target images are named `xampp/app:X.Y`.
+*   **Status**: Updated with: 8.4 (Jul 2025), 8.3 (Nov 2024), 8.1 (Feb 2024).
+

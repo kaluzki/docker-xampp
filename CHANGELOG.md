@@ -10,7 +10,7 @@
 *   **Maintenance**: Updated copyright year range.
 
 ## Experimental PHP Versions (Legacy Architecture)
-*   **Images**: Added experimental support for PHP 8.1, 8.3, and 8.4 based on the legacy `webdevops` architecture.
+*   **Images**: Added experimental support for PHP 8.1 (Feb 2024), 8.3 (Nov 2024), and 8.4 (Jul 2025) based on the legacy `webdevops` architecture.
 *   **Note**: These images were available on Docker Hub for some time but were only recently committed to the repository. They represent the older monolithic approach.
 
 ## 2022 - Feb 2024: Workflow & Maintenance

@@ -27,7 +27,7 @@ The project is currently undergoing a major refactoring:
 *   **Decoupling**: Splitting services into dedicated containers (`xampp/base`, `xampp/php`, `xampp/httpd`, etc.).
 *   **Management**: The legacy `bin/*` scripts have been superseded by [kaluzki/env](https://github.com/kaluzki/env) for better environment management.
 
-> **Note**: Experimental support for PHP 8.1, 8.3, and 8.4 based on the legacy `webdevops` architecture is available. These images were available on Docker Hub for some time but were only recently committed to the repository.
+> **Note**: Experimental support for PHP 8.1 (since Feb 2024), 8.3 (since Nov 2024), and 8.4 (since Jul 2025) based on the legacy `webdevops` architecture is available. These images were available on Docker Hub for some time but were only recently committed to the repository.
 
 ## Docker Hub
 
