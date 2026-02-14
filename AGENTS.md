@@ -1,45 +1,63 @@
-# Agentic Context
+# Agentic Context & Project Analysis
 
-This file contains context and instructions for AI agents working on the XAMPP Docker project.
+This file provides comprehensive instructions, architectural overview, and current status for AI agents working on the XAMPP Docker project. It consolidates information from `AGENTS.md`, `GEMINI.md`, and `ANALYSIS.md`.
 
-## Project Goals
+## 🎯 Project Goals & Vision
 
-*   **Modularization**: Transition from monolithic "fat" containers (legacy `src/`) to single-responsibility containers (`docker/`).
-*   **Modernization**: Adopt current best practices for Docker, PHP, and Node.js development environments.
-*   **Maintainability**: Simplify configuration and reduce dependencies on complex startup scripts.
+*   **Modularization**: Transitioning from monolithic "fat" containers (legacy `src/`) to a decoupled, service-oriented architecture (`docker/`).
+*   **Modernization**: Adopting current best practices for Docker (multi-stage builds, non-root execution), PHP (FPM, modern extensions), and Node.js.
+*   **Maintainability**: Simplifying configuration by removing complex internal startup scripts and utilizing external environment management.
 
-## Key Constraints & Preferences
+## 🏗 Architecture Overview
+
+**Pattern:** Modular Service-Oriented Architecture (SOA)
+
+### Core Components (`docker/`)
+*   **`xampp/base`**: The foundation image (Debian Trixie Slim). Includes `starship` prompt, `git`, and sets up the non-root `app` user (UID 1000).
+*   **`xampp/php`**: Specialized PHP-FPM images (8.1 - 8.5). Uses `install-php-extensions`, includes Composer and RoadRunner. Supports dynamic Xdebug via `APP_ENV`.
+*   **`xampp/httpd`**: Optimized Apache 2.4 image. Configured to proxy PHP requests to FPM via Unix sockets.
+*   **`xampp/node`**: Node.js environment managed via NVM.
+*   **`xampp/dosbox`**: (Experimental) Legacy support environment.
+
+### Communication & Security
+*   **IPC**: PHP-FPM and Apache communicate via Unix sockets (`/var/run/php/php-fpm.sock`) shared through volumes for maximum performance.
+*   **Permissions**: Mandatory non-root execution across all modern images.
+*   **Reverse Proxy**: Designed to work seamlessly with Traefik (HTTPS termination, routing).
+
+## 🛠 Key Constraints & Preferences
 
 1.  **Image Management**:
-    *   Official images are published to: `https://hub.docker.com/u/xampp`.
-    *   New development should focus on the `docker/` directory.
-    *   Legacy images in `src/` are deprecated but may still be referenced for historical context.
+    *   Official Hub: `https://hub.docker.com/u/xampp`.
+    *   Target: Modern development MUST happen in the `docker/` directory.
+    *   Legacy: `src/` is deprecated but maintained for historical reference.
 
 2.  **Environment Management**:
-    *   Do **not** use or modify scripts in `bin/`. These are deprecated.
-    *   The recommended way to manage the environment is via [kaluzki/env](https://github.com/kaluzki/env).
-    *   Any new tooling or scripts should align with the philosophy of `kaluzki/env` (externalized management).
-    *   `composer.json` was historically used to distribute `bin/` scripts but is now considered legacy/deprecated.
+    *   **Externalize**: Do not use or modify internal scripts in `bin/` (deprecated).
+    *   **Primary Tool**: Use [kaluzki/env](https://github.com/kaluzki/env) for environment orchestration.
+    *   **Configuration**: Use environment variables (e.g., `APP_DOCUMENT_ROOT`, `APP_ENV`) instead of hardcoded configs.
 
-3.  **Architecture**:
-    *   **Avoid** running multiple services (SSH, Cron, Supervisor) in a single container unless absolutely necessary.
-    *   Prefer a sidecar or separate service approach (e.g., separate PHP-FPM and Apache containers).
-    *   Use Unix sockets for inter-container communication where performance is critical (e.g., PHP-FPM <-> Apache).
+3.  **Docker Best Practices**:
+    *   Avoid multi-process containers (No Supervisor/SSH/Cron inside the app container).
+    *   Use multi-stage builds to keep image sizes minimal.
+    *   Ensure Dockerfiles are clean, documented, and use `install-php-extensions` for PHP builds.
 
-4.  **Configuration**:
-    *   Use environment variables for runtime configuration (e.g., `APP_DOCUMENT_ROOT`).
-    *   Keep Dockerfiles clean and readable. Use multi-stage builds if appropriate to reduce image size.
+## 📊 Current Analysis & Status (Feb 2026)
 
-## Current Focus
+### Strengths
+*   ✅ Clear separation between legacy and modern stacks.
+*   ✅ Security-focused (non-root) and developer-friendly (starship, bash-completion).
+*   ✅ Flexible PHP versioning (up to 8.5) and easy extension management.
 
-*   Refining the `docker/base`, `docker/php`, and `docker/httpd` images.
-*   Ensuring seamless integration with `kaluzki/env`.
-*   Documentation updates to reflect the shift away from legacy scripts.
+### Technical Debt / Pending Tasks
+*   ⚠️ **Migration**: Remaining legacy features in `src/` need to be evaluated and moved to the modular stack.
+*   ⚠️ **Testing**: The `tests/` directory is currently a placeholder. Needs automated image verification.
+*   ⚠️ **Cleanup**: Deprecated `bin/` and legacy `composer.json` should be removed once full parity with `kaluzki/env` is confirmed.
 
-## Pending Tasks
+## 🚀 Common Tasks for Agents
 
-### 1. Verify Docker Hub Image Dates [DONE]
-*   **Goal**: Find the exact push dates for the experimental PHP images (`xampp/app:8.4`, `xampp/app:8.3`, `xampp/app:8.1`) on Docker Hub (`https://hub.docker.com/u/xampp`).
-*   **Action**: Update `CHANGELOG.md` and `README.md` with the correct dates instead of the commit date (Feb 2026).
-*   **Status**: Updated with: 8.4 (Jul 2025), 8.3 (Nov 2024), 8.1 (Feb 2024).
+*   **Add PHP Extension**: Update the `install-php-extensions` list in `docker/php/Dockerfile`.
+*   **Update PHP Version**: Change `ARG from=php:X.Y-fpm` and rebuild.
+*   **Modify Web Server**: Adjust `docker/httpd/xampp.conf` for new modules or routing rules.
 
+---
+*Last updated: 2026-02-14*
