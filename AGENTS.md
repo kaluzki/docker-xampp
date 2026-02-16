@@ -86,4 +86,35 @@ This file provides comprehensive instructions, architectural overview, and curre
 *   ⚠️ Implementation of automated integration tests in `tests/` required.
 
 ---
+
+## 🧠 Patterns & Lessons Learned
+
+### Efficient Tool Integration (The "Builder-Extractor" Pattern)
+Instead of polluting the final image with build dependencies (curl, unzip, compilers, package managers), use a dedicated builder stage.
+
+**Concept:**
+1.  **Base System Stage**: Define shared runtime dependencies (e.g., `curl`, `ca-certificates`) to be used by both builder and final stages.
+2.  **Builder Stage**: Inherit from `base-system`. Install tools/compilers (e.g., `mise`, `cargo`, `npm`) and build/download artifacts.
+3.  **Extraction**: Locate the *actual* binary or artifact and copy it to a clean output directory (e.g., `/out` or `/mise`).
+    *   *Tip for Mise:* Use `mise which <binary>` to find the executable, as shims don't work standalone.
+4.  **Final Stage**: Inherit from `base-system`. Copy *only* the artifacts from the builder stage.
+
+### Caching Strategy
+Maximize build performance by caching package manager directories and download folders.
+
+*   **Syntax:** Use `--mount=type=cache,target=<path>` in `RUN` instructions.
+*   **Targets:**
+    *   **APT:** `/var/cache/apt` and `/var/lib/apt` (locks packages)
+    *   **Mise/Tools:** `/root/.cache/mise` (metadata) and `/root/.local/share/mise` (downloads/installs)
+    *   **General:** Any directory where a package manager stores widely reused data.
+
+### Configuration UX (Progressive Enhancement)
+When designing configuration variables in maintenance scripts (e.g., `TOOLS="..."`), prioritize developer experience (DX) through iterative refinement.
+
+*   **Start Robust:** Begin with an explicit format that handles all edge cases (e.g., `package:binary`).
+*   **Simplify Common Case:** Introduce "Convention over Configuration" for the happy path (e.g., `package` implies `binary=package`).
+*   **Retain Flexibility:** Ensure the simplified syntax still supports the complex cases (mixed list: `bat ripgrep:rg`).
+*   **Implementation:** Use shell parameter expansion (`${var%%:*}`) to handle parsing logic inline, avoiding external dependencies like `sed` or `awk`.
+
+---
 *Last updated: 2026-02-16*
