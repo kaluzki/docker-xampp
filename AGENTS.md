@@ -1,6 +1,6 @@
 # Agentic Context & Project Analysis
 
-This file provides comprehensive instructions, architectural overview, and current status for AI agents working on the XAMPP Docker project. It consolidates information from `AGENTS.md`, `GEMINI.md`, and `ANALYSIS.md`.
+This file provides comprehensive instructions, architectural overview, and current status for AI agents working on the XAMPP Docker project.
 
 ## 🎯 Project Goals & Vision
 
@@ -24,6 +24,44 @@ This file provides comprehensive instructions, architectural overview, and curre
 *   **Permissions**: Mandatory non-root execution across all modern images.
 *   **Reverse Proxy**: Designed to work seamlessly with Traefik (HTTPS termination, routing).
 
+## 🛠 Commands & Automation
+
+### Build Commands
+*   **Build Base Image**: `docker build docker/base -f docker/base/Dockerfile -t xampp/base`
+*   **Build PHP Image**: `docker build docker/php -f docker/php/Dockerfile -t xampp/php:8.2`
+*   **Clean Build**: Add `--no-cache` to ensure all extensions and updates are fresh.
+*   **Linting**: Use `hadolint` for Dockerfiles. Command: `hadolint <path_to_dockerfile>`.
+
+### Test Commands
+*   **Project Tests**: Currently a placeholder in `tests/`. 
+*   **Single Image Verification**: `docker run --rm -ti xampp/base bash -c "starship --version"`
+*   **Check PHP Extensions**: `docker run --rm xampp/php:8.2 php -m`
+
+## 📝 Code Style & Guidelines
+
+### Dockerfiles
+*   **Base Image**: Always use `debian:trixie-slim` or the local `xampp/base`.
+*   **Multi-Stage**: Use multi-stage builds to keep production images minimal.
+*   **Non-Root**: Always create and switch to a non-root user (usually `app` with UID 1000).
+*   **Layer Optimization**: Combine `apt-get update`, `install`, and cleanup in a single `RUN` block using Here-Documents (`<<EOF`).
+*   **Extensions**: Use the `install-php-extensions` script for all PHP modules to handle dependencies automatically.
+*   **Labels**: Include `org.opencontainers.image.vendor` and `org.opencontainers.image.source`.
+
+### Shell Scripts & Integration
+*   **Shebang**: Use `#!/usr/bin/env bash`.
+*   **Safety**: Start scripts with `set -euxo pipefail`.
+*   **Modular Configs**: Place initialization logic in `/etc/xampp.d/*.sh` instead of monolithic entrypoints.
+*   **Formatting**: Use 2 spaces for indentation in Dockerfiles and scripts.
+
+### Naming Conventions
+*   **Images**: Follow `xampp/<service>` pattern.
+*   **Variables**: Use `APP_` prefix for application-specific environment variables (e.g., `APP_ENV`, `APP_DOCUMENT_ROOT`).
+*   **Dockerfiles**: Name them `Dockerfile` in specific subdirectories or `<version>.Dockerfile` in legacy `src/`.
+
+### Error Handling
+*   **Exit Codes**: Ensure all scripts return non-zero exit codes on failure.
+*   **Validation**: Validate required environment variables at the start of entrypoint scripts.
+
 ## 🛠 Key Constraints & Preferences
 
 1.  **Image Management**:
@@ -34,30 +72,18 @@ This file provides comprehensive instructions, architectural overview, and curre
 2.  **Environment Management**:
     *   **Externalize**: Do not use or modify internal scripts in `bin/` (deprecated).
     *   **Primary Tool**: Use [kaluzki/env](https://github.com/kaluzki/env) for environment orchestration.
-    *   **Configuration**: Use environment variables (e.g., `APP_DOCUMENT_ROOT`, `APP_ENV`) instead of hardcoded configs.
+    *   **Configuration**: Use environment variables instead of hardcoded configs.
 
 3.  **Docker Best Practices**:
     *   Avoid multi-process containers (No Supervisor/SSH/Cron inside the app container).
-    *   Use multi-stage builds to keep image sizes minimal.
-    *   Ensure Dockerfiles are clean, documented, and use `install-php-extensions` for PHP builds.
+    *   Minimize layers by grouping related commands.
+    *   Always use `STOPSIGNAL SIGQUIT` for PHP-FPM images.
 
-## 📊 Current Analysis & Status (Feb 2026)
+## 📊 Current Status & Roadmap
 
-### Strengths
-*   ✅ Clear separation between legacy and modern stacks.
-*   ✅ Security-focused (non-root) and developer-friendly (starship, bash-completion).
-*   ✅ Flexible PHP versioning (up to 8.5) and easy extension management.
-
-### Technical Debt / Pending Tasks
-*   ⚠️ **Migration**: Remaining legacy features in `src/` need to be evaluated and moved to the modular stack.
-*   ⚠️ **Testing**: The `tests/` directory is currently a placeholder. Needs automated image verification.
-*   ⚠️ **Cleanup**: Deprecated `bin/` and legacy `composer.json` should be removed once full parity with `kaluzki/env` is confirmed.
-
-## 🚀 Common Tasks for Agents
-
-*   **Add PHP Extension**: Update the `install-php-extensions` list in `docker/php/Dockerfile`.
-*   **Update PHP Version**: Change `ARG from=php:X.Y-fpm` and rebuild.
-*   **Modify Web Server**: Adjust `docker/httpd/xampp.conf` for new modules or routing rules.
+*   ✅ Core images (`base`, `php`, `httpd`) functional.
+*   ⚠️ Migration of legacy PHP versions (5.6 - 7.4) to modular stack pending.
+*   ⚠️ Implementation of automated integration tests in `tests/` required.
 
 ---
-*Last updated: 2026-02-14*
+*Last updated: 2026-02-16*
