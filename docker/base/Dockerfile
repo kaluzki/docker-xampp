@@ -4,7 +4,7 @@
 ARG from=debian:trixie-slim
 
 # ---- Stage 1: Base System (curl, ca-certificates, mise) ----
-FROM ${from} AS base-system
+FROM ${from} AS stage-base
 
 COPY --from=jdxcode/mise:latest /usr/local/bin/mise /usr/local/bin/mise
 
@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 EOF
 
 # ---- Stage 2: Builder (mise tools) ----
-FROM base-system AS builder
+# docker build docker/base -f docker/base/Dockerfile --target stage-mise -t xampp/base:stage-mise
+FROM stage-base AS stage-mise
 
 RUN --mount=type=cache,target=/root/.cache/mise,sharing=locked \
     --mount=type=cache,target=/root/.local/share/mise,sharing=locked <<EOF
@@ -27,11 +28,10 @@ RUN --mount=type=cache,target=/root/.cache/mise,sharing=locked \
     mkdir -p /mise
 
     # Define tools to install (format: package[:binary])
-    TOOLS="bat eza fd ripgrep:rg zoxide bun starship"
-    
+    TOOLS="usage bat ripgrep;rg fd starship zoxide eza delta zellij bun github:netresearch/ofelia;ofelia"
     for item in $TOOLS; do
-        tool="${item%%:*}"
-        binary="${item##*:}"
+        tool="${item%%;*}"
+        binary="${item##*;}"
         
         echo "Installing $tool (binary: $binary)..."
         mise use -g "${tool}"
@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/root/.cache/mise,sharing=locked \
 EOF
 
 # ---- Stage 3: Final Image ----
-FROM base-system
+FROM stage-base
 
 LABEL org.opencontainers.image.vendor="Demjan Kaluzki"
 LABEL org.opencontainers.image.source="https://github.com/kaluzki/docker-xampp/"
@@ -57,8 +57,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git
 EOF
 
-COPY --from=builder /mise/ /usr/local/bin/
-COPY --from=ghcr.io/netresearch/ofelia /usr/bin/ofelia /usr/local/bin/ofelia
+COPY --from=stage-mise /mise/ /usr/local/bin/
 COPY etc /etc
 
 RUN <<EOF cat >> /etc/bash.bashrc
