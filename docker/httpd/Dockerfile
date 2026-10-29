@@ -46,6 +46,8 @@ DocumentRoot \${APP_DOCUMENT_ROOT}
 <Directory \${APP_DOCUMENT_ROOT}>
     AllowOverride ALL
     Require all granted
+    # Prefer the PHP entry point; fall back to index.html for directory requests.
+    DirectoryIndex index.php index.html
 </Directory>
 <FilesMatch \.php$>
     SetHandler "proxy:unix:/var/run/php/php-fpm.sock|fcgi://localhost"
